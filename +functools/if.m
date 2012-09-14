@@ -1,4 +1,4 @@
-% Functional IF branching. Accepts to fn, one for true and one for false.
+% Functional IF branching. Evaluation is deferred by wrapping branches in functions.
 %
 % if(predicate, if_fn) Call if_fn with no args, only if <predicate>
 % if(predicate, if_fn, args) Call if_fn with args {args}, passed as a cell array, only if <predicate>
@@ -21,7 +21,7 @@
 % >>> if(false, @(msg) msg, {"Hello"}, @(msg) msg, {"Goodbye"})
 % Goodbye
 
-% NOTE: Function will be called as ".if" thanks to filename, even though it
+% NOTE: Function will be called as "functools.if" thanks to filename, even though it
 % has an underscore here. Run the tests if you don't believe me.
 function retval = if_(predicate, if_fn, varargin)
 

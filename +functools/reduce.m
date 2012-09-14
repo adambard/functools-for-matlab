@@ -1,3 +1,5 @@
+% Combine a list (cell array) of vars using the function passed. 
+%
 % retval = reduce(fn, vals, varargin)
 %
 % Reduce (fold) a cell vector of vals (numeric vectors will be converted) by calling
@@ -21,6 +23,12 @@ function retval = reduce(fn, vals, varargin)
     if nargin > 2
         retval = varargin{1};
         start = 1;
+    elseif isempty(vals)
+        retval = [];
+        return;
+    elseif length(vals) <= 1
+        retval = vals{1};
+        return;
     else
         retval = fn(vals{1}, vals{2});
         start = 3;

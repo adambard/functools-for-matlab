@@ -1,3 +1,5 @@
+% Apply a function to each member of a cell (or numeric) array.
+% 
 % val = functools.map(fn, args)
 %
 % Accept a numeric or cell array of args, and

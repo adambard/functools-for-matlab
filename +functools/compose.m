@@ -1,7 +1,10 @@
+% Compose many functions into one.
+%
 % fn = compose(varargin)
 %
 % Returns a function that is a composition of the functions passed as arguments
-% to compose.
+% to compose. Applies functions in left-to-right order. i.e.,
+% functools.compose(@f1, @f2) is equivalent to f2(f1(...));
 %
 % Regrettably, only works on functions with one input due to limitations of MATLAB.
 %

@@ -2,6 +2,7 @@ function test_suite = test_basic_functools
     initTestSuite;
 end
 
+
 function test_system
     % Test a few components at once.
     
@@ -86,3 +87,72 @@ function test_if
     
     assertEqual(size(res), [4 4]);
 end
+
+function test_Y
+ fact = functools.Y(...
+            @(self)...
+                @(n) ...
+                    functools.if(n <= 1,...
+                        @() 1,...
+                        @() n * self(n-1)));
+ assertEqual(fact(4), 24);
+ assertEqual(fact(6), 1*2*3*4*5*6); 
+end
+
+function test_quicksort
+
+    tail = @(lst) lst(2:end);
+    head = @(lst) lst(1);
+    
+    qs = functools.Y(@(self) ...
+           @(lst) ...
+             functools.if(isempty(lst), ...
+               @() [], ... Is empty
+               @() [ ...
+                self(tail(lst(lst <= head(lst)))), ...
+                head(lst), ...
+                self(lst(lst > head(lst)))]));
+            
+    assertEqual(qs([8,2,45,0,4,1,2,3]), [0, 1, 2, 2, 3, 4, 8, 45]);
+
+    biglist = randn(1, 1000);
+    tic
+    x1 = qs(biglist);
+    fprintf('\nAnonymous Quicksort: '); toc
+    
+    tic
+    x2 = qs_iter(biglist);
+    fprintf('Subfunction Quicksort: '); toc
+    
+    tic
+    x3 = sort(biglist);
+    fprintf('Built-in sort: '); toc
+    
+    assertEqual(x1, x2);
+    assertEqual(x1, x3);
+
+        
+%     quicksort = @(lst) ...
+end
+
+function retval = qs_iter(lst)
+    if isempty(lst)
+        retval = [];
+        return
+    end
+    pivot = lst(1);
+    rest = lst(2:end);
+    retval = [qs_iter(rest(rest <= pivot)) lst(1) qs_iter(rest(rest > pivot))];
+end
+
+function test_nth
+    functools.nth(0, @disp, 'This test passes.');
+    assertEqual(functools.nth(1, @() 4875), 4875);
+    A = [1 2 2; 4 5 6; 7 8 9];
+    [arg1, arg2] = find(mod(A, 2) == 0);
+    assertFalse(all(functools.apply(@find, {mod(A, 2) == 0}) == arg1));
+    assertFalse(all(functools.apply(@find, {mod(A, 2) == 0}) == arg2));
+    
+    assertEqual(functools.nth(2, @find, mod(A, 2) == 0), arg2);
+end
+

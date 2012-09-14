@@ -1,3 +1,5 @@
+% Apply a function to a numeric or cell array of arguments
+%
 % val = functools.apply(fn, args)
 %
 % Accept a numeric or cell array of args, and
@@ -14,6 +16,7 @@
 % >>> functools.apply(sumargs, [1, 2, 3, 4])
 % 10
 function retval = apply(fn, args)
+
     if isnumeric(args)
         args = num2cell(args);
     end
