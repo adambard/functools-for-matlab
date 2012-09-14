@@ -14,7 +14,7 @@
 % >> fact(4)
 % 24
 function res = Y(f)
-    import functools.*;
+    import functools.apply;
     res = apply(...
         @(x) f(@(y) apply(apply(x, {x}), {y})), ...
         {@(x) f(@(y) apply(apply(x, {x}), {y}))});

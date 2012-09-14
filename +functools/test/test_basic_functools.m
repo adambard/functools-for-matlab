@@ -5,21 +5,22 @@ end
 
 function test_system
     % Test a few components at once.
-    
+
     join = @(sep, args) ...
-        functools.if(ischar(sep), @() ... % Input check
+        functools.if_(ischar(sep), @() ... % Input check
             functools.reduce(@(x, y) [x sep y], ... % Reduce to string
                 functools.map(@num2str, args))); % Convert args to string.
-            
+
     assertEqual(join({'Not a string'}, {1, 2, 3, 4}), []);
     assertEqual(join(', ', {1, 2, 3, 4}), '1, 2, 3, 4');
+    assertEqual(join(', ', [1, 2, 3, 4]), '1, 2, 3, 4');
     assertEqual(join('+', {'A', 2, 'x'}), 'A+2+x');
-    
+
     % This is a profoundly stupid way of doing things, but it's good for
     % demonstration.
     ghettosum = functools.compose(...
         functools.partial(join, '+'), @eval);
-    
+
     assertEqual(ghettosum({1, 2, 3, 4, 5, 6}), 21);
     % => eval(join('+', {1, 2, 3, 4, 5, 6}))
 end
@@ -40,7 +41,7 @@ function test_apply
     adder = @(x, y) x + y;
     sum = functools.partial(@functools.reduce, adder);
     sumargs = @(varargin) sum(varargin);
-    
+
     assertEqual(sumargs(1, 2, 3, 4), 10);
     assertEqual(functools.apply(sumargs, [1, 2, 3, 4]), 10);
 end
@@ -50,10 +51,10 @@ function test_partial
     b = ones(2, 1) / 2;
     movingavg2 = functools.partial(@filter, b, a);
     assertElementsAlmostEqual(movingavg2(1:4), [0.5, 1.5, 2.5, 3.5], 'absolute', 6);
-    
+
     movingavg2 = functools.partial(@filter, b);
     assertElementsAlmostEqual(movingavg2(a, 1:4), [0.5, 1.5, 2.5, 3.5], 'absolute', 6);
-    
+
 end
 
 function test_rpartial_more
@@ -73,66 +74,76 @@ function test_map
 end
 
 function test_if
-    assertEqual(functools.if(true, @() 'Hello'), 'Hello');
-    assertEqual(functools.if(false, @() 'Hello'), []);
-    assertEqual(functools.if(false, @() 'Hello', @() 'Goodbye'), 'Goodbye');
-    assertEqual(functools.if(true, @(msg) msg, @(msg) msg, {'Hello'}), 'Hello');
-    assertEqual(functools.if(false, @(msg) msg, @(msg) msg, {'Goodbye'}), 'Goodbye');
-    assertEqual(functools.if(false, @(msg) msg, {'Hello'}, @(msg) msg, {'Goodbye'}), 'Goodbye');
-    
+    assertEqual(functools.if_(true, @() 'Hello'), 'Hello');
+    assertEqual(functools.if_(false, @() 'Hello'), []);
+    assertEqual(functools.if_(false, @() 'Hello', @() 'Goodbye'), 'Goodbye');
+    assertEqual(functools.if_(true, @(msg) msg, @(msg) msg, {'Hello'}), 'Hello');
+    assertEqual(functools.if_(false, @(msg) msg, @(msg) msg, {'Goodbye'}), 'Goodbye');
+    assertEqual(functools.if_(false, @(msg) msg, {'Hello'}, @(msg) msg, {'Goodbye'}), 'Goodbye');
+
     % Multiple arguments
-    res = functools.if(true, ...
+    res = functools.if_(true, ...
         @(n, m) ones(n, m), {4, 4}, ...
         @(n, m) fprintf('Could not make ones with dims %d, %d', n, m), {4, 4});
-    
+
     assertEqual(size(res), [4 4]);
 end
 
 function test_Y
- fact = functools.Y(...
-            @(self)...
-                @(n) ...
-                    functools.if(n <= 1,...
-                        @() 1,...
-                        @() n * self(n-1)));
- assertEqual(fact(4), 24);
- assertEqual(fact(6), 1*2*3*4*5*6); 
+    fact = functools.Y(...
+        @(self)...
+            @(n) ...
+                functools.if_(n <= 1,...
+                    @() 1,...
+                    @() n * self(n-1)));
+    assertEqual(fact(4), 24);
+    assertEqual(fact(6), 1*2*3*4*5*6);
+
+    fib = functools.Y(...
+        @(self)...
+            @(n) ...
+                functools.if_(n <= 1,...
+                    @() 1, ...
+                    @() self(n - 1) + self(n - 2)));
+
+    assertEqual(functools.map(fib, 0:9), {1 1 2 3 5 8 13 21 34 55})
 end
 
 function test_quicksort
 
     tail = @(lst) lst(2:end);
     head = @(lst) lst(1);
-    
-    qs = functools.Y(@(self) ...
-           @(lst) ...
-             functools.if(isempty(lst), ...
-               @() [], ... Is empty
-               @() [ ...
-                self(tail(lst(lst <= head(lst)))), ...
-                head(lst), ...
-                self(lst(lst > head(lst)))]));
-            
+
+    qs = functools.Y(...
+        @(self) ...
+            @(lst) ...
+                functools.if_(isempty(lst), ...
+                    @() [], ... Is empty
+                    @() [ ...
+                        self(tail(lst(lst <= head(lst)))), ...
+                        head(lst), ...
+                        self(lst(lst > head(lst)))]));
+
     assertEqual(qs([8,2,45,0,4,1,2,3]), [0, 1, 2, 2, 3, 4, 8, 45]);
 
     biglist = randn(1, 1000);
     tic
     x1 = qs(biglist);
     fprintf('\nAnonymous Quicksort: '); toc
-    
+
     tic
     x2 = qs_iter(biglist);
     fprintf('Subfunction Quicksort: '); toc
-    
+
     tic
     x3 = sort(biglist);
     fprintf('Built-in sort: '); toc
-    
+
     assertEqual(x1, x2);
     assertEqual(x1, x3);
 
-        
-%     quicksort = @(lst) ...
+
+    %     quicksort = @(lst) ...
 end
 
 function retval = qs_iter(lst)
@@ -152,7 +163,7 @@ function test_nth
     [arg1, arg2] = find(mod(A, 2) == 0);
     assertFalse(all(functools.apply(@find, {mod(A, 2) == 0}) == arg1));
     assertFalse(all(functools.apply(@find, {mod(A, 2) == 0}) == arg2));
-    
+
     assertEqual(functools.nth(2, @find, mod(A, 2) == 0), arg2);
 end
 
